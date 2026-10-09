@@ -1,10 +1,93 @@
 /* ==========================================================================
-   MOHAMMED RISHAN C.H. - PORTFOLIO INTERACTIVE LOGIC
+   MOHAMMED RISHAN C.H. - PORTFOLIO INTERACTIVE LOGIC (VIBRANT & AESTHETIC REVISION)
+   Features: Particle Canvas Backdrop, Intersection Scroll Reveal, 3D Card Tilt
    ========================================================================== */
 
 document.addEventListener('DOMContentLoaded', () => {
 
-  /* --- 1. Sticky Navbar & Scrollspy --- */
+  /* --- 1. Floating Neon Particle Background Canvas --- */
+  const canvas = document.getElementById('bg-particles');
+  if (canvas) {
+    const ctx = canvas.getContext('2d');
+    let width = canvas.width = window.innerWidth;
+    let height = canvas.height = window.innerHeight;
+
+    window.addEventListener('resize', () => {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    });
+
+    const particles = [];
+    const particleCount = Math.min(Math.floor(width / 25), 60);
+
+    const colors = ['rgba(0, 242, 254, ', 'rgba(127, 0, 255, ', 'rgba(255, 0, 127, '];
+
+    class Particle {
+      constructor() {
+        this.x = Math.random() * width;
+        this.y = Math.random() * height;
+        this.radius = Math.random() * 2 + 1;
+        this.baseAlpha = Math.random() * 0.5 + 0.2;
+        this.colorPrefix = colors[Math.floor(Math.random() * colors.length)];
+        this.vx = (Math.random() - 0.5) * 0.6;
+        this.vy = (Math.random() - 0.5) * 0.6;
+      }
+
+      update() {
+        this.x += this.vx;
+        this.y += this.vy;
+
+        if (this.x < 0) this.x = width;
+        if (this.x > width) this.x = 0;
+        if (this.y < 0) this.y = height;
+        if (this.y > height) this.y = 0;
+      }
+
+      draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = this.colorPrefix + this.baseAlpha + ')';
+        ctx.shadowBlur = 12;
+        ctx.shadowColor = this.colorPrefix + '0.8)';
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+    }
+
+    for (let i = 0; i < particleCount; i++) {
+      particles.push(new Particle());
+    }
+
+    function animateParticles() {
+      ctx.clearRect(0, 0, width, height);
+      
+      for (let i = 0; i < particles.length; i++) {
+        particles[i].update();
+        particles[i].draw();
+
+        // Connect nearby particles with glowing lines
+        for (let j = i + 1; j < particles.length; j++) {
+          const dx = particles[i].x - particles[j].x;
+          const dy = particles[i].y - particles[j].y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          if (dist < 120) {
+            ctx.beginPath();
+            ctx.moveTo(particles[i].x, particles[i].y);
+            ctx.lineTo(particles[j].x, particles[j].y);
+            ctx.strokeStyle = `rgba(0, 242, 254, ${0.15 * (1 - dist / 120)})`;
+            ctx.lineWidth = 0.7;
+            ctx.stroke();
+          }
+        }
+      }
+      requestAnimationFrame(animateParticles);
+    }
+
+    animateParticles();
+  }
+
+  /* --- 2. Sticky Navbar & Scrollspy --- */
   const navbar = document.getElementById('navbar');
   const navLinks = document.querySelectorAll('.nav-link');
   const sections = document.querySelectorAll('section');
@@ -16,10 +99,9 @@ document.addEventListener('DOMContentLoaded', () => {
       navbar.classList.remove('scrolled');
     }
 
-    // Scrollspy active highlighting
     let current = '';
     sections.forEach(section => {
-      const sectionTop = section.offsetTop - 120;
+      const sectionTop = section.offsetTop - 130;
       const sectionHeight = section.clientHeight;
       if (window.scrollY >= sectionTop && window.scrollY < sectionTop + sectionHeight) {
         current = section.getAttribute('id');
@@ -34,7 +116,21 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  /* --- 2. Mobile Navigation Toggle --- */
+  /* --- 3. Scroll Reveal Observer --- */
+  const revealElements = document.querySelectorAll('.glass-card, .section-header, .hero-content, .hero-visual');
+  revealElements.forEach(el => el.classList.add('reveal-up'));
+
+  const revealObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('revealed');
+      }
+    });
+  }, { threshold: 0.12 });
+
+  revealElements.forEach(el => revealObserver.observe(el));
+
+  /* --- 4. Mobile Navigation Toggle --- */
   const mobileNavToggle = document.getElementById('mobile-nav-toggle');
   const navLinksContainer = document.getElementById('nav-links');
 
@@ -48,7 +144,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Close mobile menu on link click
   navLinks.forEach(link => {
     link.addEventListener('click', () => {
       navLinksContainer.classList.remove('mobile-open');
@@ -57,11 +152,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  /* --- 3. Dark / Light Theme Toggle --- */
+  /* --- 5. Dark / Light Theme Toggle --- */
   const themeToggleBtn = document.getElementById('theme-toggle-btn');
   const htmlElement = document.documentElement;
 
-  // Load saved theme or default to dark
   const savedTheme = localStorage.getItem('rishan-portfolio-theme') || 'dark';
   htmlElement.setAttribute('data-theme', savedTheme);
   updateThemeIcon(savedTheme);
@@ -85,7 +179,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  /* --- 4. Skill Category Filter --- */
+  /* --- 6. Skill Category Filter & Bar Animation --- */
   const filterBtns = document.querySelectorAll('.filter-btn');
   const skillCards = document.querySelectorAll('.skill-card');
 
@@ -100,7 +194,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const category = card.getAttribute('data-category');
         if (filter === 'all' || category === filter) {
           card.style.display = 'flex';
-          card.style.animation = 'fadeIn 0.5s ease forwards';
         } else {
           card.style.display = 'none';
         }
@@ -108,7 +201,24 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  /* --- 5. Project Details Modal --- */
+  // Animate skill progress bars when visible
+  const skillObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const fillBar = entry.target.querySelector('.skill-progress-fill');
+        if (fillBar) {
+          const targetWidth = fillBar.getAttribute('style').match(/width:\s*(\d+%)/);
+          if (targetWidth) {
+            fillBar.style.width = targetWidth[1];
+          }
+        }
+      }
+    });
+  }, { threshold: 0.2 });
+
+  skillCards.forEach(card => skillObserver.observe(card));
+
+  /* --- 7. Project Details Modal --- */
   const projectModal = document.getElementById('project-modal');
   const modalCloseBtn = document.getElementById('modal-close-btn');
   const modalBodyContent = document.getElementById('modal-body-content');
@@ -163,16 +273,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (data) {
         modalBodyContent.innerHTML = `
-          <div style="display: inline-block; padding: 0.35rem 0.9rem; border-radius: var(--radius-pill); background: rgba(0, 242, 254, 0.1); color: var(--accent-cyan); font-size: 0.85rem; font-weight: 700; margin-bottom: 1rem;">
+          <div style="display: inline-block; padding: 0.35rem 0.9rem; border-radius: var(--radius-pill); background: rgba(0, 242, 254, 0.12); color: var(--accent-cyan); font-size: 0.85rem; font-weight: 800; margin-bottom: 1rem; box-shadow: 0 0 15px rgba(0, 242, 254, 0.2);">
             ${data.badge}
           </div>
-          <h2 style="font-family: var(--font-heading); font-size: 1.8rem; margin-bottom: 1rem;">${data.title}</h2>
-          <img src="${data.image}" alt="${data.title}" style="width: 100%; height: 260px; object-fit: cover; border-radius: var(--radius-md); margin-bottom: 1.5rem; border: 1px solid var(--border-color);">
+          <h2 style="font-family: var(--font-heading); font-size: 1.9rem; margin-bottom: 1rem; font-weight: 800;">${data.title}</h2>
+          <img src="${data.image}" alt="${data.title}" style="width: 100%; height: 270px; object-fit: cover; border-radius: var(--radius-md); margin-bottom: 1.5rem; border: 1px solid var(--border-glow);">
           <p style="color: var(--text-secondary); font-size: 1.05rem; margin-bottom: 1.5rem; line-height: 1.6;">${data.description}</p>
           
-          <h4 style="font-family: var(--font-heading); font-size: 1.1rem; margin-bottom: 0.75rem; color: var(--text-primary);">Key Highlights & Features:</h4>
-          <ul style="list-style: none; display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1.5rem;">
-            ${data.features.map(f => `<li style="display: flex; align-items: center; gap: 0.6rem; color: var(--text-secondary); font-size: 0.95rem;"><i class="fa-solid fa-check" style="color: var(--accent-emerald);"></i> ${f}</li>`).join('')}
+          <h4 style="font-family: var(--font-heading); font-size: 1.15rem; margin-bottom: 0.75rem; color: var(--text-primary); font-weight: 700;">Key Highlights & Features:</h4>
+          <ul style="list-style: none; display: flex; flex-direction: column; gap: 0.55rem; margin-bottom: 1.5rem;">
+            ${data.features.map(f => `<li style="display: flex; align-items: center; gap: 0.65rem; color: var(--text-secondary); font-size: 0.95rem;"><i class="fa-solid fa-check" style="color: var(--accent-emerald);"></i> ${f}</li>`).join('')}
           </ul>
 
           <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.5rem;">
@@ -203,7 +313,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.key === 'Escape' && projectModal.classList.contains('active')) closeModal();
   });
 
-  /* --- 6. Click to Copy Email --- */
+  /* --- 8. Click to Copy Email --- */
   const copyEmailCard = document.getElementById('copy-email');
   if (copyEmailCard) {
     copyEmailCard.addEventListener('click', () => {
@@ -216,7 +326,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  /* --- 7. Contact Form Handling & Toast Notification --- */
+  /* --- 9. Contact Form Handling & Toast Notification --- */
   const contactForm = document.getElementById('contact-form');
   const toast = document.getElementById('toast');
   const toastMessage = document.getElementById('toast-message');
@@ -228,7 +338,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const name = document.getElementById('name').value;
       const category = document.getElementById('subject').value;
 
-      showToast(`Thank you ${name}! Your message regarding "${category}" has been sent.`);
+      showToast(`Thank you ${name}! Your inquiry regarding "${category}" has been sent.`);
       contactForm.reset();
     });
   }
